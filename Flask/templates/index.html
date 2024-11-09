@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Captioning</title>
+</head>
+<body>
+    <h2>Upload an image to generate a caption</h2>
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*">
+        <button type="submit">Generate Caption</button>
+    </form>
+</body>
+</html>
