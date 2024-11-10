@@ -15,16 +15,22 @@ from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input, d
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
-# Load the encoding
-with open("saved\encoded_train_features.pkl", "rb") as f:
+model = ResNet50(weights="imagenet",input_shape=(224,224,3))
+model_new = Model(model.input,model.layers[-2].output)
+
+with open("saved/encoded_train_features.pkl", "rb") as f:
     encoding_train = pickle.load(f)
+with open("saved/encoded_test_features.pkl", "rb") as f:
+    encoding_test = pickle.load(f)
     
-# Load word mappings
-word_to_index = {} 
+model_path="..\model_weights\model_19.h5"
+model_f = load_model(model_path)
+
+index_to_word = {}
 with open("saved\index_to_word.pkl","rb") as f:
     index_to_word=pickle.load(f)
     
-index_to_word = {}
+word_to_index = {} 
 with open("saved\word_to_index.pkl","rb") as f:
     word_to_index=pickle.load(f)
 
@@ -34,12 +40,9 @@ def preprocess_img(img):
     img = image.load_img(img,target_size=(224,224))
     img = image.img_to_array(img)
     img = np.expand_dims(img,axis=0)
-    # Normalisation
     img = preprocess_input(img)
     return img
 
-model = ResNet50(weights="imagenet",input_shape=(224,224,3))
-model_new = Model(model.input,model.layers[-2].output)
 def encode_image(img):
     img = preprocess_img(img)
     feature_vector = model_new.predict(img)
@@ -47,27 +50,26 @@ def encode_image(img):
     print(feature_vector.shape)
     return feature_vector
 
-# Load model
-model_path = "../model_weights/model_19.h5"
-model = load_model(model_path)
-
 def predict_caption(photo):
     in_text = "startseq"
     for i in range(max_len):
         sequence = [word_to_index[w] for w in in_text.split() if w in word_to_index]
-        sequence = pad_sequences([sequence],maxlen=max_len,padding='post')
-        
-        ypred = model.predict([photo,sequence])
+        sequence = pad_sequences([sequence], maxlen=max_len, padding='post')
+        # print("Sequence shape:", sequence.shape)  # Checking shape of sequence 
+        ypred = model_f.predict([photo, sequence])
+        # print("Prediction shape:", ypred.shape)  # Checking prediction output shape
         ypred = ypred.argmax()
-        word = index_to_word[ypred]
-        in_text += ' ' + word
-        
+        word = index_to_word.get(ypred, None)
+        if word is None:
+            # print(f"Warning: predicted index {ypred} is not in index_to_word.")
+            break
+        in_text += (' ' + word)
         if word == "endseq":
             break
     
-    final_caption = in_text.split()[1:-1]
-    final_caption = ' '.join(final_caption)
+    final_caption = ' '.join(in_text.split()[1:-1])
     return final_caption
+
 
 @app.route('/')
 def index():
@@ -75,20 +77,25 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No file selected"}), 400
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No file selected"}), 400
 
-    # Save the file
-    file_path = os.path.join("static/uploaded_images", file.filename)
-    file.save(file_path)
+        file_path = os.path.join("static/uploaded_images", file.filename)
+        file.save(file_path)
 
-    # Process the image and generate caption
-    img = Image.open(file_path)
-    photo = encode_image(img)
-    photo_2048=photo.reshape((1,2048))
-    caption = predict_caption(photo_2048)
+        photo = encode_image(file_path)
+        photo_2048=photo.reshape((1,2048))
+        caption = predict_caption(photo_2048)
 
-    return jsonify({"caption": caption})
+        return jsonify({"caption":caption})
+    except Exception as e:
+        print("Error encountered:", e)
+        return jsonify({"error": "An error occurred on the server."}), 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
