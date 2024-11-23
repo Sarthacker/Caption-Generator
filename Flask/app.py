@@ -18,10 +18,10 @@ app.config['DEBUG'] = True
 model = ResNet50(weights="imagenet",input_shape=(224,224,3))
 model_new = Model(model.input,model.layers[-2].output)
 
-with open("saved/encoded_train_features.pkl", "rb") as f:
-    encoding_train = pickle.load(f)
-with open("saved/encoded_test_features.pkl", "rb") as f:
-    encoding_test = pickle.load(f)
+# with open("saved/encoded_train_features.pkl", "rb") as f:
+#     encoding_train = pickle.load(f)
+# with open("saved/encoded_test_features.pkl", "rb") as f:
+#     encoding_test = pickle.load(f)
     
 model_path="..\model_weights\model_19.h5"
 model_f = load_model(model_path)
@@ -91,7 +91,7 @@ def predict():
         photo_2048=photo.reshape((1,2048))
         caption = predict_caption(photo_2048)
 
-        return jsonify({"caption":caption})
+        return jsonify({"image_url": file_path, "caption": caption})
     except Exception as e:
         print("Error encountered:", e)
         return jsonify({"error": "An error occurred on the server."}), 500

@@ -2,13 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Image Captioning</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Caption Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>Upload an image to generate a caption</h2>
-    <form action="/predict" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept="image/*">
-        <button type="submit">Generate Caption</button>
-    </form>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-10">
+        <h1 class="text-3xl font-bold text-center mb-6">Image Captioning</h1>
+        <form id="upload-form" action="/predict" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="mb-4">
+                <label for="file" class="block text-gray-700 text-sm font-bold mb-2">Upload an Image</label>
+                <input type="file" id="file" name="file" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Generate Caption</button>
+            </div>
+        </form>
+        <div id="output" class="mt-6 hidden">
+            <h2 class="text-xl font-bold mb-4">Result:</h2>
+            <div class="flex flex-col items-center">
+                <img id="uploaded-image" src="" alt="Uploaded Image" class="w-1/2 mb-4 rounded shadow">
+                <p id="caption" class="text-lg text-gray-800 font-semibold"></p>
+            </div>
+        </div>
+    </div>    
 </body>
+<script>
+    const form = document.getElementById('upload-form');
+    const outputDiv = document.getElementById('output');
+    const uploadedImage = document.getElementById('uploaded-image');
+    const caption = document.getElementById('caption');
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                alert(error.error || "Something went wrong.");
+                return;
+            }
+
+            const data = await response.json();
+            uploadedImage.src = data.image_url;
+            caption.textContent = data.caption;
+
+            outputDiv.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while processing your request.');
+        }
+    });
+</script>
 </html>
