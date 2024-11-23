@@ -23,7 +23,7 @@ model_new = Model(model.input,model.layers[-2].output)
 # with open("saved/encoded_test_features.pkl", "rb") as f:
 #     encoding_test = pickle.load(f)
     
-model_path="..\model_weights\model_19.h5"
+model_path="model_weights\model_19.h5"
 model_f = load_model(model_path)
 
 index_to_word = {}
