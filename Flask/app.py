@@ -70,7 +70,6 @@ def predict_caption(photo):
     final_caption = ' '.join(in_text.split()[1:-1])
     return final_caption
 
-
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -83,6 +82,10 @@ def predict():
         file = request.files['file']
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
+        
+        saved_path="static/uploaded_images"
+        if not os.path.exists(saved_path):
+            os.makedirs(saved_path)
 
         file_path = os.path.join("static/uploaded_images", file.filename)
         file.save(file_path)
