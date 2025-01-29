@@ -19,7 +19,7 @@ This project implements a deep learning neural network that takes images as inpu
 - The image features are combined with the text data (captions) and passed into an LSTM network to generate captions word by word. The model is trained to predict the next word in the caption sequence given the image features and previous words.
 
 ### Word Embeddings and Tokenization:
-- The captions are tokenized and transformed into word embeddings using Word2Vec or GloVe embeddings, helping the model learn semantic relationships between words.
+- The captions are tokenized and transformed into word embeddings using Word2Vec and GloVe embeddings, helping the model learn semantic relationships between words.
 
 ## Dataset
 The model was trained using a dataset of images and corresponding captions. Examples of such datasets include:
